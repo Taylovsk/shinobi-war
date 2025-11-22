@@ -1,15 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Recupera a chave de ambiente do Vite de forma segura
-const getApiKey = () => import.meta.env.VITE_API_KEY;
-
 export const generateLoreOrQuest = async (prompt: string): Promise<string> => {
-  const apiKey = getApiKey();
+  // Recupera a chave de ambiente do Vite de forma segura
+  const apiKey = import.meta.env.VITE_API_KEY;
 
-  // Verificação de segurança para evitar crash se a chave não estiver configurada
-  if (!apiKey || apiKey.includes('YOUR_API_KEY')) {
-    console.warn("Gemini API Key is missing. Please check Vercel Environment Variables (VITE_API_KEY).");
-    return "O Oráculo está dormindo. (Configure a VITE_API_KEY no Vercel para acordá-lo).";
+  // Verificação de segurança para evitar crash se a chave não estiver configurada ou for padrão
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.includes('YOUR_API_KEY') || apiKey.length < 10) {
+    console.warn("⚠️ Shinobi War Alert: VITE_API_KEY não encontrada ou inválida nas variáveis de ambiente.");
+    return "🚫 O selo do Oráculo está quebrado. (Configure a VITE_API_KEY no Vercel para restaurar a conexão).";
   }
 
   try {
@@ -29,6 +27,6 @@ export const generateLoreOrQuest = async (prompt: string): Promise<string> => {
     return response.text || "O pergaminho está em branco...";
   } catch (error) {
     console.error("Erro ao consultar o oráculo:", error);
-    return "Uma interferência de chakra impediu a comunicação. O Oráculo está indisponível no momento.";
+    return "🌀 Uma interferência massiva de chakra impediu a comunicação. Tente novamente mais tarde.";
   }
 };
