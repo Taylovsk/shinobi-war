@@ -8,8 +8,7 @@ import ClanSpins from './components/ClanSpins';
 
 type Tab = 'home' | 'spins';
 
-// Instantiate SDK only once
-const discordSdk = new DiscordSDK(import.meta.env.VITE_DISCORD_CLIENT_ID || "1234567890");
+const discordSdk = new DiscordSDK(import.meta.env.VITE_DISCORD_CLIENT_ID || "");
 
 const App: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,7 +19,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      // Environment detection strategy
       const query = new URLSearchParams(window.location.search);
       const isDiscordEnv = query.get('mode') === 'discord' || window.location.hostname.includes('discordsays.com');
       
@@ -31,8 +29,7 @@ const App: React.FC = () => {
         try {
           await discordSdk.ready();
         } catch (e) {
-          // Silent fail for local dev testing outside iframe
-          console.debug("Discord SDK not ready (running locally?)");
+          // Running locally or outside iframe context
         }
       }
     };
@@ -50,7 +47,6 @@ const App: React.FC = () => {
     ${activeTab === tabName ? 'text-orange-500' : 'text-white'}
   `;
 
-  // Discord Activity View - Optimized for iframe/embedded context
   if (isDiscordMode) {
     return (
       <div className="h-screen w-full bg-black overflow-hidden relative flex flex-col items-center justify-center">
@@ -62,7 +58,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Full Web View
   return (
     <div className="min-h-screen relative text-white flex flex-col">
       <ParticleBackground />
