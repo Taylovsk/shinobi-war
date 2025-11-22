@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dice5, Sparkles, RefreshCw, Shield } from 'lucide-react';
 
 type Rarity = 'Comum' | 'Raro' | 'Lendário' | 'Divino';
@@ -41,6 +41,16 @@ const ClanSpins: React.FC<ClanSpinsProps> = ({ isDiscordView = false }) => {
   const [displayClan, setDisplayClan] = useState<Clan>(CLANS[0]);
   const [history, setHistory] = useState<Clan[]>([]);
   const [message, setMessage] = useState("Tente a sorte, Shinobi!");
+  
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const getRandomClan = (): Clan => {
     const rand = Math.random() * 100;
@@ -66,12 +76,14 @@ const ClanSpins: React.FC<ClanSpinsProps> = ({ isDiscordView = false }) => {
     const maxIterations = 25;
     const intervalSpeed = 100;
 
-    const interval = setInterval(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = setInterval(() => {
       setDisplayClan(CLANS[Math.floor(Math.random() * CLANS.length)]);
       counter++;
 
       if (counter >= maxIterations) {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         const result = getRandomClan();
         setDisplayClan(result);
         setIsSpinning(false);
