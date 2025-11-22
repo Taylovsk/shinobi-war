@@ -1,109 +1,32 @@
-import React, { useEffect, useRef } from 'react';
+import { GoogleGenAI } from "@google/genai";
 
-interface Particle {
-  x: number;
-  y: number;
-  z: number;
-  size: number;
-  color: string;
-  velocity: { x: number; y: number; z: number };
-}
+export const generateLoreOrQuest = async (prompt: string): Promise<string> => {
+  // Recupera a chave de ambiente do Vite de forma segura
+  const apiKey = import.meta.env.VITE_API_KEY;
 
-const ParticleBackground: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Verificação de segurança para evitar crash se a chave não estiver configurada ou for padrão
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.includes('YOUR_API_KEY') || apiKey.length < 10) {
+    console.warn("⚠️ Shinobi War Alert: VITE_API_KEY não encontrada ou inválida nas variáveis de ambiente.");
+    return "🚫 O selo do Oráculo está quebrado. (Configure a VITE_API_KEY no Vercel para restaurar a conexão).";
+  }
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let particles: Particle[] = [];
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    const setSize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-    };
-
-    const colors = ['#ea580c', '#fbbf24', '#f97316', '#ef4444']; 
-
-    const initParticles = (count: number) => {
-      particles = [];
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: (Math.random() - 0.5) * width * 2,
-          y: (Math.random() - 0.5) * height * 2,
-          z: Math.random() * 2000,
-          size: Math.random() * 3,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          velocity: {
-            x: (Math.random() - 0.5) * 0.5,
-            y: (Math.random() - 0.5) * 0.5,
-            z: Math.random() * 5 + 2,
-          },
-        });
+  try {
+    // Inicializa o cliente apenas quando necessário (Lazy initialization)
+    const ai = new GoogleGenAI({ apiKey: apiKey });
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        systemInstruction: "Você é um Mestre de RPG (Dungeon Master) experiente no universo de Naruto (Shinobi World). Seu tom é épico, misterioso e motivador. Você deve responder em Português do Brasil. Seja conciso, use termos como 'Chakra', 'Jutsu', 'Vila Oculta'. Evite quebrar a imersão.",
+        temperature: 0.8,
+        maxOutputTokens: 300,
       }
-    };
+    });
 
-    const draw = () => {
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; 
-      ctx.fillRect(0, 0, width, height);
-
-      particles.forEach((p) => {
-        const perspective = 300 / (300 + p.z);
-        const x2d = centerX + p.x * perspective;
-        const y2d = centerY + p.y * perspective;
-        const size2d = p.size * perspective * 2;
-
-        if (size2d > 0) {
-          ctx.beginPath();
-          ctx.arc(x2d, y2d, size2d, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-        }
-
-        p.z -= p.velocity.z;
-        p.x += p.velocity.x;
-        p.y += p.velocity.y;
-
-        if (p.z <= -290) {
-          p.z = 2000;
-          p.x = (Math.random() - 0.5) * width * 2;
-          p.y = (Math.random() - 0.5) * height * 2;
-        }
-      });
-
-      animationFrameId = requestAnimationFrame(draw);
-    };
-
-    setSize();
-    initParticles(400);
-    draw();
-
-    window.addEventListener('resize', setSize);
-
-    return () => {
-      window.removeEventListener('resize', setSize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"
-      style={{ background: 'radial-gradient(circle at center, #1a0505 0%, #000000 100%)' }}
-    />
-  );
+    return response.text || "O pergaminho está em branco...";
+  } catch (error) {
+    console.error("Erro ao consultar o oráculo:", error);
+    return "🌀 Uma interferência massiva de chakra impediu a comunicação. Tente novamente mais tarde.";
+  }
 };
-
-export default ParticleBackground;
